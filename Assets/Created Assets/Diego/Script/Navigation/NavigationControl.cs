@@ -136,6 +136,7 @@ public class NavigationControl : MonoBehaviour {
     [Header("How many frames to simulate before stopping")]
     public int framesToSimulate = 100;
 
+
     // Variables for the playable space grid and scaling
     //public XRNode HeadPos;
     public Transform HeadSet; //Assign Main Camera
@@ -178,7 +179,7 @@ public class NavigationControl : MonoBehaviour {
     [Header("Visualize Rig displacement")]
     public float x = 0;
     public float y = 0;
-    public float z =0;
+    public float z = 0;
     public float k = 0;
     [Header("Demo Settings")]
     public bool Demo = false;
@@ -188,10 +189,14 @@ public class NavigationControl : MonoBehaviour {
     public int technique_2_use = 0;
     [Header("Controllers")]
     public GameObject leftController, rightController;
+    public GameObject initialisingText;
+    public GameObject toolTip;
     //Control of the position of the headset
     protected Transform headsetTransform; //Transform component (to get local/world coords, get rotations, etc...)
     protected Vector3 lastHeadPosInLocal; //Local positions of the headset
     protected Vector3 curHeadPosInLocal;
+    protected Vector3 lastHeadPosInWorld; //Local positions of the headset in World
+    protected Vector3 curHeadPosInWorld;
     protected AreaOfInterest[] AOIlist;
     //Control of the position of the playArea rig (adaptive navigation basically moves the playArea around...)
     protected Transform playAreaTransform;
@@ -202,6 +207,7 @@ public class NavigationControl : MonoBehaviour {
     void Start () {
         headsetTransform = GameObject.FindObjectOfType<SteamVR_Camera>().GetComponent<Transform>();
         curHeadPosInLocal = headsetTransform.localPosition; curHeadPosInLocal.y = 0;
+
         playAreaTransform = GameObject.FindObjectOfType<SteamVR_PlayArea>().gameObject.transform;
         AOIlist = GameObject.FindObjectsOfType<AreaOfInterest>();
         //Matrix4x4 headsetToCamera=new Matrix4x4();
@@ -429,6 +435,8 @@ public class NavigationControl : MonoBehaviour {
     protected bool registeredVRTKListeners = false;
     static bool _experimentReady = false;
     void Update () {
+
+
         if (frameCount < framesToSimulate)
         {
             frameCount += 1;
@@ -675,6 +683,8 @@ public class NavigationControl : MonoBehaviour {
 
             hasConvertedPoints = true;
             Debug.Log("Points have been converted");
+            initialisingText.SetActive(false);
+            toolTip.SetActive(true);
         }
 
         if (frameCount == framesToSimulate && ScalingValuesPerTechnique.springScalingActivate == true)
@@ -822,16 +832,37 @@ public class NavigationControl : MonoBehaviour {
         }
         //A. Update current and last position (constrained to floor). Compute displacement
         lastHeadPosInLocal = curHeadPosInLocal;
-        curHeadPosInLocal = headsetTransform.localPosition; curHeadPosInLocal.y = 0;
+        curHeadPosInLocal = headsetTransform.localPosition; 
+        curHeadPosInLocal.y = 0;
+
+        lastHeadPosInWorld = curHeadPosInWorld;
+        curHeadPosInWorld = headsetTransform.position;
+        curHeadPosInWorld.y = 0;
+
+        //bookmark
+
         Vector3 displacement = curHeadPosInLocal - lastHeadPosInLocal;
         Vector3 handPosition = getCurHandPosition();
-        //B. Select candidate AOI, based on current position IN WORLD
-        AreaOfInterest candidateAOI= selectCurrentAOI(headsetTransform.position);
+        AreaOfInterest candidateAOI = selectCurrentAOI(headsetTransform.position);
         float k = candidateAOI.getKValue(headsetTransform.position);
-        //C. Update head position based on the selected AOI. 
-        updateUserPosition(k, displacement);
         float curTime = UnityEngine.Time.realtimeSinceStartup;
-        TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
+        if (ScalingValuesPerTechnique.springScalingActivate == false)
+        {
+            updateUserPositionDrift(k, displacement);
+            Vector3 driftVector = ComputeDrift(curHeadPosInWorld, curHeadPosInLocal);
+            float driftMagnitude = driftVector.magnitude;
+            Vector3 virtualCenter = playAreaTransform.position;
+            virtualCenter.y = 0;
+            float PGCMag = virtualCenter.magnitude;
+            Vector3 headToVR = headsetTransform.position; //headToVR.y = 0;
+            Vector3 headToTracking = headsetTransform.localPosition; //headToTracking.y = 0;
+            TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
+
+
+        }
+        //B. Select candidate AOI, based on current position IN WORLD
+
+        //C. Update head position based on the selected AOI. 
         //EnvironmentManager.instance().centralText("Head " + curHeadPosInLocal + "\n VHead"+ headsetTransform.position);
     }
 
@@ -930,6 +961,60 @@ public class NavigationControl : MonoBehaviour {
         this.k = k;
     }
 
+    private Vector3 ComputeDrift(Vector3 userVPos, Vector3 userRPos)
+    {
+        Vector3 oldUserPosition = userVPos;             //User Virtual position in simulation
+        Vector3 newUserPosition = userVPos;
+        Vector3 drift = userVPos - userRPos; ;          //Current drift. Initially set to VirtUserPos(t=now)- RealUserPos(t=now) => Equivalent to our "Gain" vector
+        Vector3 endPosition = new Vector3(0, 0, 0);     //Target position --> We simulate steps in direction towards the center (0,0,0)
+        float displacement = 0.0025f;                     //Assume the user will move 1cm per frame.
+                                                          // 2.2 Variables to detect simulation end.
+        float lastDist = userVPos.x * userVPos.x + userVPos.z * userVPos.z; //Squared distance
+        float dist = lastDist;
+
+        //3. Simulation Steps
+        //3.1. Create a displacement vector of towards the centre (size=displacement variable)
+        Vector3 delta_userPos = (endPosition - userVPos);   //Vector in direction to centre
+        delta_userPos.Normalize();                              //Make it unitary
+        delta_userPos *= displacement;                          //make it "displacement units" long
+
+        //3.2. Apply that displacement to current position, untill we reach the centre 
+        while (dist <= lastDist && dist >= 0.05f)//&& dist > 0)//while we are approaching (we will come to a point when we overshoot --> dist>lastDist).
+        {
+            //Apply a navigation step
+            oldUserPosition = newUserPosition;
+            float k = GetK_Naive(oldUserPosition);
+            newUserPosition += k * delta_userPos;
+            //Correct distances to detects arrival: 
+            lastDist = dist;
+            dist = Mathf.Abs(newUserPosition.x * newUserPosition.x + newUserPosition.z * newUserPosition.z);
+
+            if (dist <= lastDist)
+            {
+                //compute increment to drift vector
+                drift += (k - 1) * delta_userPos;
+            }
+        }
+        return drift;
+    }
+
+    float GetK_Naive(Vector3 Pv)
+    {
+        AreaOfInterest candidateAOI = selectCurrentAOI(Pv);
+        return candidateAOI.getKValue(Pv);
+    }
+
+    void updateUserPositionDrift(float k, Vector3 displacement)
+    {
+        Vector3 appliedDisplacement = (k - 1) * displacement;
+        playAreaTransform.position += appliedDisplacement;
+
+        x = playAreaTransform.position.x;
+        y = playAreaTransform.position.y;
+        z = playAreaTransform.position.z;
+        this.k = k;
+    }
+
     public void addListener(InteractionListener l) {
         listeners.Add(l);
     }
@@ -946,8 +1031,11 @@ public class NavigationControl : MonoBehaviour {
 
     private void DoTriggerPressed(object sender, ControllerInteractionEventArgs e)
     {
-        Debug.Log("TRIGGER pressed down" + e);
-        TaskManager.instance().onTriggerPressed(0);
+        if (frameCount == framesToSimulate)
+        {
+            Debug.Log("TRIGGER pressed down" + e);
+            TaskManager.instance().onTriggerPressed(0);
+        }
     }
 
     private void DoTriggerReleased(object sender, ControllerInteractionEventArgs e)
