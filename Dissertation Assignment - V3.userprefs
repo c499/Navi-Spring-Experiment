@@ -1,0 +1,25 @@
+﻿<Properties StartupItem="Assembly-CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\SteamVR\Plugins\openvr_api.cs">
+    <Files>
+      <File FileName="Assets\SteamVR\Plugins\openvr_api.cs" Line="3979" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\EventManager.cs" line="95" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\SteamVR\Scripts\SteamVR_PlayArea.cs" line="181" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\SteamVR\Scripts\SteamVR_PlayArea.cs" line="250" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\SteamVR\Plugins\openvr_api.cs" line="3989" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\SteamVR\Plugins\openvr_api.cs" line="3979" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\OldScripts\DJVR_TriggerStart.cs" line="63" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\SteamVR_Unity_Toolkit\Scripts\VRTK_RoomExtender_PlayAreaGizmo.cs" line="80" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\DJVR_Trigger_Base.cs" line="427" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\DJVR_Trigger_Base.cs" line="163" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\DJVR_Trigger_.cs" line="161" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\DJVR_Trigger_AOI_Scanner.cs" line="21" column="1" />
+      <Breakpoint file="C:\Users\Diego\Desktop\Dissertation Assignment - 144156  Completed\Dissertation Assignment - V3\Assets\Created Assets\Scripts\DJVR_Trigger_Stand.cs" line="27" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

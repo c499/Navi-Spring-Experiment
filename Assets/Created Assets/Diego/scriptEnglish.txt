@@ -1,0 +1,65 @@
+- Hi! Thanks for taking part in our experiment.
+Press TRIGGER to continue...
+
+- I am the "Central Area", and I will give you directions to help you during the experiment. 
+Press TRIGGER to continue...
+
+- When you see me in the centre of the room, please come to me for directions.
+Press TRIGGER to continue...
+
+- I can be a bit naughty. If you read see me, I might be right behind you!
+Press TRIGGER to continue...
+
+- We first need to take some measurements from you. 
+Press TRIGGER to continue...
+
+- <USER_CALIBRATION_TASK>
+
+- Great! Now let's get you ready for some action.
+Do you see those flags around you? 
+Press TRIGGER to continue...
+
+- OK! During the experiment you will need to travel to some of those flags.
+Press TRIGGER to continue...
+
+- I will give you directions on how to do this. 
+Let's give it a try...
+Press TRIGGER to continue...
+
+- <TRAVEL TASK 2 >
+
+- Great! Let's try again.
+Press TRIGGER to continue...
+
+- <TRAVEL TASK 4> 
+
+- Brilliant! You got a hang of it. 
+However, thereis something else I need you to do for me.
+Press TRIGGER to continue...
+
+- Now, when you finish your trip, I will ask you to try and align your head, to look at some targets.
+Press TRIGGER to continue...
+
+- You will see two little spheres (red and blue), where you need to place your eyes.
+Press TRIGGER to continue...
+
+- And you will also see a circle. You need to look at it's centre.
+Press TRIGGER to continue...
+
+- Let's give it a try... go to flag 0
+REMEMBER: Spheres for your eyes, and look at the circle.
+Press TRIGGER to continue...
+
+-<2x Parafrustum tasks>
+
+- Brilliant! you seem to be ready. 
+Press TRIGGER to continue...
+
+-One more thing. At times you will hear we turn on our timer, to measure your performance. <TickTack goes on>
+Press TRIGGER to continue...
+
+- Try to do your best when the timer is on!
+Press TRIGGER to continue...
+
+- OK! Little less conversation and a little action. 
+Press TRIGGER to START EXPERIMENT...

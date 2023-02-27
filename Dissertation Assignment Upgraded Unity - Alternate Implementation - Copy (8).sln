@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2015
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dissertation Assignment Upgraded Unity - Alternate Implementation - Copy (8).CSharp", "Dissertation Assignment Upgraded Unity - Alternate Implementation - Copy (8).CSharp.csproj", "{22103C9C-E0CD-7514-41FC-B2658F68EA71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dissertation Assignment Upgraded Unity - Alternate Implementation - Copy (8).CSharp.Editor", "Dissertation Assignment Upgraded Unity - Alternate Implementation - Copy (8).CSharp.Editor.csproj", "{054590C3-A87E-94CF-BB96-28E7B490CB7A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{22103C9C-E0CD-7514-41FC-B2658F68EA71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22103C9C-E0CD-7514-41FC-B2658F68EA71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22103C9C-E0CD-7514-41FC-B2658F68EA71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22103C9C-E0CD-7514-41FC-B2658F68EA71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{054590C3-A87E-94CF-BB96-28E7B490CB7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{054590C3-A87E-94CF-BB96-28E7B490CB7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{054590C3-A87E-94CF-BB96-28E7B490CB7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{054590C3-A87E-94CF-BB96-28E7B490CB7A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
