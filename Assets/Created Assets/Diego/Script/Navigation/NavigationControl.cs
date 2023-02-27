@@ -849,17 +849,15 @@ public class NavigationControl : MonoBehaviour {
         if (ScalingValuesPerTechnique.springScalingActivate == false)
         {
             updateUserPositionDrift(k, displacement);
-            Vector3 driftVector = ComputeDrift(curHeadPosInWorld, curHeadPosInLocal);
-            float driftMagnitude = driftVector.magnitude;
-            Vector3 virtualCenter = playAreaTransform.position;
-            virtualCenter.y = 0;
-            float PGCMag = virtualCenter.magnitude;
-            Vector3 headToVR = headsetTransform.position; //headToVR.y = 0;
-            Vector3 headToTracking = headsetTransform.localPosition; //headToTracking.y = 0;
-            TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
-
-
         }
+        Vector3 driftVector = ComputeDrift(curHeadPosInWorld, curHeadPosInLocal);
+        float driftMagnitude = driftVector.magnitude;
+        Vector3 virtualCenter = playAreaTransform.position;
+        virtualCenter.y = 0;
+        float PGCMag = virtualCenter.magnitude;
+        Vector3 headToVR = headsetTransform.position; //headToVR.y = 0;
+        Vector3 headToTracking = headsetTransform.localPosition; //headToTracking.y = 0;
+        TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
         //B. Select candidate AOI, based on current position IN WORLD
 
         //C. Update head position based on the selected AOI. 
