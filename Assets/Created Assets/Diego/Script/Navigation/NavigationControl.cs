@@ -845,6 +845,7 @@ public class NavigationControl : MonoBehaviour {
         Vector3 handPosition = getCurHandPosition();
         AreaOfInterest candidateAOI = selectCurrentAOI(headsetTransform.position);
         float k = candidateAOI.getKValue(headsetTransform.position);
+        k = GetKMod2(lastHeadPosInLocal, curHeadPosInLocal, lastHeadPosInWorld, curHeadPosInWorld);
         float curTime = UnityEngine.Time.realtimeSinceStartup;
         if (ScalingValuesPerTechnique.springScalingActivate == false)
         {
@@ -923,6 +924,8 @@ public class NavigationControl : MonoBehaviour {
 
 
     }
+
+
 
     public void resetDrift() {
         playAreaTransform.position = new Vector3(0,0,0);
@@ -1041,6 +1044,327 @@ public class NavigationControl : MonoBehaviour {
         Debug.Log("TRIGGER released" + e);
     }
     /// ////////////////////////// ////////////////////////// ////////////////////////// ///////////////////////
+
+    public Vector4 SLB_ComputeDisplacement(Vector3 realPos, Vector3 prevRealPos)
+    {
+        /*  D = d_u*U + d_v*V */
+        Vector3 U = Vector3.zero;
+        float d_u = 0;
+
+        U = SLB_GetDir_Gaze();
+        /*if (dispDirecitonRW.Count <= 90) {			
+			U = SLB_GetDir_Gaze();
+		} else {
+			U = SLB_GetDir_Avg();
+		}*/
+
+        d_u = SLB_GetScaledDisplament(realPos, prevRealPos);
+        return new Vector4(U.x, U.y, U.z, d_u);
+        // to update user pos use: SLB_UpdateDisplacement (U, d_u);
+    }
+
+    private float SLB_GetSpeed(float mag, float deltaTme = -1.0f)
+    {
+        if (deltaTme < 0)
+            return mag / Time.deltaTime;
+        else
+            return mag / deltaTme;
+    }
+
+    // virtual world coordinates
+    private void SLB_UpdateDisplacement(Vector3 dir, float mag)
+    {
+        //Vector3 dir = new Vector3(dirAndMag.x, dirAndMag.y, dirAndMag.z);
+        //float mag = dirAndMag.w;
+        Vector3 displacement = mag * dir;
+        playAreaTransform.position += displacement;
+
+        x = playAreaTransform.position.x;
+        y = playAreaTransform.position.y;
+        z = playAreaTransform.position.z;
+        //this.k = mag;
+    }
+
+    private Vector4 SLB_GetDir_Avg()
+    {
+        Vector3 avgDir = SLB_GetDir_Gaze();
+        return new Vector4(avgDir.x, avgDir.y, avgDir.z, 1);
+        /*Vector3 avgDir = Vector3.zero;
+		float avgMag = 0;
+
+		// 2 second with 60fps = 120fps (considering a minimum of 60fps)
+		for (int i = 0; i < 90; i++) {
+			Vector3 aux = dispDirecitonRW [dispDirecitonRW.Count - i - 1];			 
+			aux.y = 0;
+			avgDir += aux;
+			avgMag += dispMagnitudRW[dispMagnitudRW.Count - i - 1];	
+		}
+
+		avgDir = (avgDir / 90).normalized;
+		avgMag = avgMag / 90;
+		return new Vector4 (avgDir.x,avgDir.y, avgDir.z, avgMag);*/
+    }
+
+    private Vector3 SLB_GetDir_Gaze()
+    {
+        Vector3 gazeDir = headsetTransform.forward;
+        gazeDir.y = 0;
+        return gazeDir.normalized;
+    }
+
+    private float SLB_GetScaledDisplament(Vector3 realPos, Vector3 prevPos)
+    {
+        // average human walking speed 1.4 m/s
+
+        float displacementReal = (realPos - prevPos).magnitude;
+        float speed = SLB_GetSpeed(displacementReal);
+        return SLB_GetScale(speed) * displacementReal;
+    }
+
+    private float SLB_GetScale(float curVelocity)
+    {
+        if (float.IsNaN(curVelocity))
+            curVelocity = 0.001f;//  approx 0.28m/s
+        /// compute the walking speed in a second considering 90fps
+        //curVelocity *= 1/Time.deltaTime;
+        // if we consider average human velocity as 1.4 m/s and about 20% of the range from 0 m/s to 1.4 m/s
+        // to keep small movements with scale 1, and bigger displacemets will e scaled exponentially to the user velocity
+
+        // In(8) = 2.07944154 (maxScale) , Vo = 0.28m/s  ,  maxVelocity  = 1.4m/s  , C = In(8)/(maxVelocity - Vo) , then e^(velocity - Vo)*C
+        float scale = Mathf.Exp((curVelocity - 0.2f) * 1.62f); //2.9155f
+
+        if (float.IsNaN(scale) || scale < 1 || float.IsNegativeInfinity(scale))
+            scale = 1;
+        else if (float.IsPositiveInfinity(scale) || scale > 7)
+            scale = 7;
+        return scale;
+    }
+
+    float epsilon = 0.25f;
+    float alpha = 0.25f;
+
+    float SLB_GetKMod2(Vector3 realPosOld, Vector3 realPosCur, Vector3 virtPosOld, Vector3 virtPosCur, float scalingF, float curVelocity)// Vector3 userRPos,
+    {
+        //1. Get uncorrected K
+        float K_nf = scalingF;
+
+        //2. Get drift associated with (potentially) next position 
+        Vector3 Drift_t2 = SLB_ComputeDrift(virtPosCur, realPosCur, curVelocity);
+
+        //driftList.Add(Drift_t2);
+        //3. Get drift associated with older position 
+
+        Vector3 displacementVec = realPosCur - realPosOld;
+        Vector3 normalizeDrift;
+        //if (Drift_t2.magnitude > 0.05f)//If drift is large, I only keep direction
+        normalizeDrift = Drift_t2.normalized;
+        //else //If it is below my threshold (5cm), correction is weighed within the rang (0, 0.05)->(0,1)
+        //	normalizeDrift = Drift_t2 / 0.05f;
+        Vector3 normalizeDisp = displacementVec.normalized;
+        float dotprod = Vector3.Dot(normalizeDrift, normalizeDisp);
+
+        //4. Compute explression according to "correction" formula: 
+        float correction = -dotprod * alpha;
+
+        if (correction < -epsilon)
+            correction = 1 - epsilon;
+        else if (correction > epsilon)
+            correction = 1 + epsilon;
+        else
+            correction = 1 + correction;
+        return K_nf * correction;
+    }
+
+    private Vector3 SLB_ComputeDrift(Vector3 userVPos, Vector3 userRPos, float curVelocity)
+    {
+        Vector3 origin = userVPos;
+        float v0 = curVelocity;
+        Vector3 oldUserPosition = userVPos;             //User Virtual position in simulation
+        Vector3 newUserPosition = userVPos;
+        Vector3 drift = userVPos - userRPos; ;          //Current drift. Initially set to VirtUserPos(t=now)- RealUserPos(t=now) => Equivalent to our "Gain" vector
+        Vector3 endPosition = new Vector3(0, 0, 0);     //Target position --> We simulate steps in direction towards the center (0,0,0)
+
+        // to comput the scaling factor at eachtime t we need:
+        // a. initializing variables
+        float deltaTime = 0.0111f;                      // time with 90fps = 1 / 90
+
+        // 2.2 Variables to detect simulation end.
+        float lastDist = userVPos.x * userVPos.x + userVPos.z * userVPos.z; //Squared distance
+        float dist = lastDist;
+
+        //3. Simulation Steps
+        //3.1. Create a displacement vector of towards the centre (size=displacement variable)
+        Vector3 delta_userPos = (endPosition - userVPos);   //Vector in direction to centre
+        delta_userPos.Normalize();                          //Make it unitary
+
+        //3.2. Apply that displacement to current position, untill we reach the centre 
+        while (dist <= lastDist && dist >= 0.0025f)//&& dist > 0)//while we are approaching (we will come to a point when we overshoot --> dist>lastDist).
+        {
+            //Apply a navigation step
+            oldUserPosition = newUserPosition;
+            float velocity = quadraticSpeed(origin, endPosition, newUserPosition, v0 < 0.05f ? 0.05f : v0);
+            //Debug.Log("Velocity "+ curVelocity+"\n");//Checked it varies between 0.2 and 1.4m/s
+
+            // compute curScaling factor
+            float SLB_k = SLB_GetScale(velocity);
+
+            //float k = GetK_Naive(oldUserPosition);
+            newUserPosition += SLB_k * delta_userPos * velocity * deltaTime;
+
+            //Correct distances to detects arrival: 
+            lastDist = dist;
+            dist = newUserPosition.x * newUserPosition.x + newUserPosition.z * newUserPosition.z;//squaredDist
+
+            if (dist <= lastDist)// or t >= t_2?
+            {
+                //compute increment to drift vector
+                drift += (SLB_k - 1) * delta_userPos * velocity * deltaTime;
+            }
+        }
+        return drift;
+    }
+
+    static public float quadraticSpeed(Vector3 originVW, Vector3 targetVW, Vector3 curPos, float v0 = 0.05f, float maxV = 1.4f)
+    {
+        float L = (targetVW - originVW).magnitude;
+        float l = (curPos - originVW).magnitude;
+        float a = (2 * maxV - v0) / L;
+
+        if (l < L / 2)
+            return v0 + a * l;
+        else if (l < L)
+            return maxV - a * (l - L / 2);
+        else
+            return 0.05f;
+
+    }
+
+
+    private Vector3 GetDrift(Vector3 userPosition, Vector3 playAreaTransformAux, float currK)
+    {
+        //if (currK == 1)
+        //    return oldVectorDrift;
+
+        //A. Initial drift
+        Vector3 drift = playAreaTransformAux; //This implicitly contains VirtUserPos(t=now)- RealUserPos(t=now)
+
+        Vector3 oldUserPosition = userPosition;
+        Vector3 newUserPosition = userPosition;
+
+        //B simulate steos in direction towards the center (0,0,0)
+        Vector3 endPosition = new Vector3(0, 0, 0);
+        float displacement = 0.01f; //Assume the user will move 1cm per frame.
+        //B.1. Compute a displacement vector of "displacement units" towards the centre
+        Vector3 delta_userPos = (endPosition - userPosition);   //Vector in direction to centre
+        delta_userPos.Normalize();                              //Make it unitary
+        delta_userPos *= displacement;                          //make it "displacement units" long
+
+        //B.2. Take delta_userPos steps towards the center (returning to 0,0,0)
+        //Detect we arrive to target
+        float dist, lastDist;
+        lastDist = newUserPosition.x * userPosition.x + newUserPosition.z * userPosition.z;
+        dist = lastDist;
+
+        while (dist <= lastDist && dist >= 0.05f)//&& dist > 0)//while we are approaching (we will come to a point when we overshoot --> dist>lastDist).
+        {
+            //Apply a navigation step
+            oldUserPosition = newUserPosition;
+            AreaOfInterest candidateAOI = selectCurrentAOI(oldUserPosition);
+            float k = candidateAOI.getKValue(oldUserPosition);
+            newUserPosition += k * delta_userPos;
+            //Correct distances to detects arrival: 
+            lastDist = dist;
+            dist = Mathf.Abs(newUserPosition.x * userPosition.x + newUserPosition.z * userPosition.z);
+            if (dist <= lastDist)// && dist > 0)
+            {
+                //compute increment to drift vector
+                drift += (k - 1) * delta_userPos;
+            }
+        }
+
+        //Compute drift from that simulation:
+        //oldVectorDrift = drift;
+        return drift;
+    }
+
+    private float GetCorrectK(float k, Vector3 curHeadPosInWorld, Vector3 lastHeadPosInWorld, Vector3 playAreaTransform)
+    {
+        Vector3 displacement = curHeadPosInWorld - lastHeadPosInWorld;
+
+        //A Calcular drift con NaviFuield sin correccion
+        //A.1. Desplazamiento aplicado al mundo (por el K-1 del Vive)
+        Vector3 playAreaTransformAux = new Vector3(playAreaTransform.x, playAreaTransform.y, playAreaTransform.z);
+        Vector3 displacementInRealWorld = displacement / k;
+        //float prevDrift = GetDrift(lastHeadPosInWorld, playAreaTransformAux, k).magnitude;
+        //Calcular cuanto se movera el entorno (k-1)*realDisplacement+playAreaTransform
+        playAreaTransformAux += (k - 1) * displacementInRealWorld;                                //DIEGO: Used this straightaway
+
+        //Drift final sin correcciones:      
+        Vector3 currDriftVect = GetDrift(curHeadPosInWorld, playAreaTransformAux, k);
+        float finalDrift = currDriftVect.magnitude;
+        //driftList.Add(currDriftVect);
+
+
+        /*if (prevDrift != 0)
+        {
+            //float TargetDrift = 0.5f;
+            float deltaTime = 0.0111f; // time with 90fps = 1 / 90
+
+            Vector3 derivDrift = 0.1f * (currDriftVect - prevDriftVec) / deltaTime;
+            //float driftRatio = finalDrift / TargetDrift;
+            float correction = derivDrift.magnitude;//derivDrift.magnitude * driftRatio;
+
+            if (correction > 0.3f)
+                correction = 0.3f;
+            if (correction < -0.25f)
+                correction = -0.25f;
+
+            k = k + k * correction;
+        }
+        #endregion
+
+        prevDriftVec = currDriftVect;
+        prevDrift = finalDrift;
+            
+        */
+
+        return k; // * weighFactor / delta_t// Are we using this at all?
+    }
+
+    /*Returns K, corrected to reduce drift. Requires current and previour positions in real and virtual.*/
+    float GetKMod2(Vector3 realPosOld, Vector3 realPosCur, Vector3 virtPosOld, Vector3 virtPosCur)// Vector3 userRPos,
+    {
+        //1. Get uncorrected K
+        float K_nf = GetK_Naive(virtPosOld);
+
+        //2. Get drift associated with (potentially) next position (Pv_t2, Pr_t2)
+        Vector3 Drift_t2 = ComputeDrift(virtPosCur, realPosCur);
+
+        //driftList.Add(Drift_t2);
+        //3. Get drift associated with current position (Pv_t1, Pr_t1)
+
+        Vector3 displacementVec = virtPosCur - virtPosOld;
+        Vector3 normalizeDrift = Drift_t2.normalized;
+        Vector3 normalizeDisp = displacementVec.normalized;
+        float dotprod = Vector3.Dot(normalizeDrift, normalizeDisp);
+
+        //4. Compute explression according to "correction" formula: 
+        float correction = -dotprod * alpha;
+
+        if (correction < -epsilon)
+            correction = 1 - epsilon;
+        else if (correction > epsilon)
+            correction = 1 + epsilon;
+        else
+            correction = 1 + correction;
+        //scalingFactorNavi = correction;
+        return K_nf * correction;
+        /*
+        float correction = 0;
+        correction = Remap(dotprod, -1f, 1f, -0.25f, 0.25f);
+
+        return K_nf * (1 - correction); // * weighFactor / delta_t  K_nf * (1 + correction)     */
+    }
 
     static public float thresholdTravelDistance() { return 0.3f; }//30 cm from the centre?
 }
