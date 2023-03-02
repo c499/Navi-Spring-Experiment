@@ -15,16 +15,16 @@ public class ScalingValuesPerTechnique
         switch (m) //I've hijacked homogenous scaling to be at 1 at all times so I can apply my spring based scaling instead. This is no longer homogenous scaling this is my spring based scale-adaptive navigation
         {
             case M_FACTOR.M_NONE:
-                return 1;
+                return 1; //getScalingValue returning 1.01 will mean spring scaling is active
             case M_FACTOR.M_2:
                 springNavigationScale = 2;
-                return 1;
+                return 1.01f;
             case M_FACTOR.M_4:
                 springNavigationScale = 4;
-                return 1;
+                return 1.01f;
             case M_FACTOR.M_8:
                 springNavigationScale = 8;
-                return 1;
+                return 1.01f;
         }
         return 0;
     }
@@ -35,11 +35,11 @@ public class ScalingValuesPerTechnique
             case M_FACTOR.M_NONE:
                 return 1;
             case M_FACTOR.M_2:
-                return 2.185f * 2; 
+                return 2.185f; 
             case M_FACTOR.M_4:
-                return  4.586f * 2;
+                return  4.586f;
             case M_FACTOR.M_8:
-                return  9.167f * 2;
+                return  9.167f;
         }
         return 0;
     }
@@ -48,14 +48,14 @@ public class ScalingValuesPerTechnique
         switch (t)
         {
             case NavigationTechnique.NAVIFIELD:
-                springScalingActivate = false;
-                Debug.Log("Navigation: Not spring (Navifields/no scaling)");
+                // springScalingActivate = false;
+                // Debug.Log("Navigation: Not spring (Navifields/no scaling)");
                 return naviFieldScalingValue(m);
             case NavigationTechnique.HOMOGENEOUS:
                 if (m != M_FACTOR.M_NONE)
                 {
-                    springScalingActivate = true; 
-                    Debug.Log("Navigation: Spring");
+                    // springScalingActivate = true; 
+                //     Debug.Log("Navigation: Spring");
 
                 }
                 return homogeneousScalingValue(m);
@@ -434,8 +434,15 @@ public class NavigationControl : MonoBehaviour {
     // Update is called once per frame
     protected bool registeredVRTKListeners = false;
     static bool _experimentReady = false;
+	static float kValue;
     void Update () {
-
+		kValue = constK();
+		Debug.Log (kValue);
+		if (kValue == 1.01f) {
+			ScalingValuesPerTechnique.springScalingActivate = true;
+		} else {
+			ScalingValuesPerTechnique.springScalingActivate = false;
+		}
 
         if (frameCount < framesToSimulate)
         {
@@ -951,6 +958,22 @@ public class NavigationControl : MonoBehaviour {
         }
         return candidateAOI;
     }
+
+	public float constK() {
+		float maxK = 0;
+		AreaOfInterest candidateAOI = null;
+		//Check all AOI and get the one with minimum K
+		foreach (AreaOfInterest aoi in AOIlist)
+		{
+			float k = aoi.getKValue(new Vector3(0,0,0));
+			if (k > maxK)
+			{
+				maxK = k;
+				candidateAOI = aoi;
+			}
+		}
+		return maxK;
+	}
 
     void updateUserPosition(float k, Vector3 displacement) {
         Vector3 appliedDisplacement=(k-1)*displacement;

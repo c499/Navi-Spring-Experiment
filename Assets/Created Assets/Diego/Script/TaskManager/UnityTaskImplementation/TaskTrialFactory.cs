@@ -17,7 +17,7 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager.UnityTaskImplementation
             t.addTask(new ReturnToCentreTask2(data));
             t.addTask(new TravelTask2(data));
             t.addTask(new ManeuverTask(data));
-            //t.addTask(new QuestionnaireTask(data));
+            t.addTask(new QuestionnaireTask(data));
 
             return t;
 

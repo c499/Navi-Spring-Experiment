@@ -40,5 +40,7 @@ public class AreaOfInterest : MonoBehaviour {
             return (k = innerMultiplier +(maxMultiplier-innerMultiplier)*(distance - innerRadius) / (maxRadius - innerRadius));
         }
         return (k = maxMultiplier); 
+
     }
+
 }
