@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Assets.Created_Assets.Diego.Script.TaskManager
 {
-    public enum NavigationTechnique { NAVIFIELD=0, HOMOGENEOUS};
+    public enum NavigationTechnique { NAVIFIELD=0, HOMOGENEOUS, SPRINGGRID};
     //We will have one unique ID for eahc potential path in the experiment (2_1; 1_2; 2-1-2-1; 1-2-1-2 and symetrics. 
     public enum NavigationPathsIDs { NP2_1_A=0, NP2_1_B,               //2_1 paths (two possible paths starting on flag 0)
                               NP2_1_A_Sym, NP2_1_B_Sym,         //Symetric condition (do 5-flag for the flag order...)

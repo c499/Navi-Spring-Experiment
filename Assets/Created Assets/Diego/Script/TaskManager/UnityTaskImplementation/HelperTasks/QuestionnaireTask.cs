@@ -72,6 +72,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager.UnityTaskImplementation
         public override void writeGlobalParametersToCollection(List<string> travelContents, List<string> maneuvreContents, List<string> questionnaireContents)
         {
             //string headerQuestionnaire = "UserID, Technique, M_FACTOR, TRAVEL_PATH_LENGHT(2/4), EASY_TRAVEL, COMFORT_TRAVEL, EASY_MANEUVRE, COMFORT_MANEUVRE";
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string entry = taskData.travellingTrialData.UserID + ","
                            + taskData.travellingTrialData.technique + ","
                            + taskData.travellingTrialData.M_factor + ","

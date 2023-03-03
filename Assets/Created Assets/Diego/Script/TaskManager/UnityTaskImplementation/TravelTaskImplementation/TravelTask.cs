@@ -81,6 +81,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
             taskData.travellingTrialData.totalDeviation += curDeviation;
             taskData.travellingTrialData.numSamples++;
             //B. Update File
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string entry = "" + taskData.travellingTrialData.UserID + "," +
                                "T" + taskData.travellingTrialData.technique + "," +
                                taskData.travellingTrialData.M_factor + "," +
@@ -102,6 +106,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
         }
 
         public override void writeGlobalParametersToCollection(List<string> travelContents, List<string> maneuvreContents, List<string> questionnaireContents) {
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string entry = "" + taskData.travellingTrialData.UserID + ","
                             + "T" + taskData.travellingTrialData.technique + ","
                             + taskData.travellingTrialData.M_factor + ","
@@ -116,6 +124,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
 
         public override void deallocateTask() {
             //WRITE FILE FOR THIS TRIAL:
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string fileName = Application.dataPath + "/../ExperimentResults/" +
                              taskData.travellingTrialData.UserID + "_" +
                                "T" + taskData.travellingTrialData.technique + "_" +

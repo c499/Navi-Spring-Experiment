@@ -70,6 +70,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
                 float curDeviation = _computeDeviation(curTargetFlagPosition_OnFloor - curOriginalPosition_OnFloor, headPosInVR_OnFloor - curOriginalPosition_OnFloor);
                 taskData.travellingTrialData.totalDeviation += curDeviation;
                 taskData.travellingTrialData.numSamples++;
+                if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+                {
+                    taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+                }
                 //B. Update File
                 //string header = "UserID, Technique, M_FACTOR, M_FACTOR_applied, PATH_LENGTH, PATH_ID, FLAG1, FLAG2, FLAG3, FLAG4, FLAG5, RANDOM_F_OFFSET, _CUR_FLAG ,_TIME,  _R_HEAD_X, _R_HEAD_Y, _R_HEAD_Z, _V_HEAD_X, _V_HEAD_Y, _V_HEAD_Z, _CUR_M_FACTOR, _CUR_DEVIATION"; 
                 string entry = "" + taskData.travellingTrialData.UserID + "," +
@@ -112,6 +116,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
 
         public override void writeGlobalParametersToCollection(List<string> travelContents, List<string> maneuvreContents, List<string> questionnaireContents) {
             //string headerTravel = "UserID, Technique, M_FACTOR, PATH_LENGTH, PATH_ID, FLAG1, FLAG2, FLAG3, FLAG4, FLAG5, RANDOM_F_OFFSET, _T_TCT,  _AVG_DEVIATION, _REAL_DIST_TRAVELLED, _VIRT_DIST_TRAVELLED";
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string entry =  taskData.travellingTrialData.UserID + ","
                             + taskData.travellingTrialData.technique + ","
                             + taskData.travellingTrialData.M_factor + ","

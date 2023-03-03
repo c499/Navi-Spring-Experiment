@@ -35,11 +35,11 @@ public class ScalingValuesPerTechnique
             case M_FACTOR.M_NONE:
                 return 1;
             case M_FACTOR.M_2:
-                return 2.185f; 
+                return 2.185f / NavigationControl.roomScaleMultiplierGlobal; 
             case M_FACTOR.M_4:
-                return  4.586f;
+                return  4.586f / NavigationControl.roomScaleMultiplierGlobal;
             case M_FACTOR.M_8:
-                return  9.167f;
+                return  9.167f / NavigationControl.roomScaleMultiplierGlobal;
         }
         return 0;
     }
@@ -87,6 +87,8 @@ public class ScalingValuesPerTechnique
 
 public class NavigationControl : MonoBehaviour {
     // Number of points in each dimension of the grid
+    public float roomScaleMultiplier = 0.9f;
+    public static float roomScaleMultiplierGlobal;
     [Header("WARNING: Turn off grid visualization during use")]
     [Header("It takes a ridiculous amount of performance in this unity version")]
     public bool showOriginalGrid = false;
@@ -205,6 +207,12 @@ public class NavigationControl : MonoBehaviour {
     
     // Use this for initialization
     void Start () {
+        roomScaleMultiplierGlobal = roomScaleMultiplier;
+        playableFirstX *= NavigationControl.roomScaleMultiplierGlobal;
+        playableSecondX *= NavigationControl.roomScaleMultiplierGlobal;
+        playableFirstY *= NavigationControl.roomScaleMultiplierGlobal;
+        playableSecondY *= NavigationControl.roomScaleMultiplierGlobal;
+
         headsetTransform = GameObject.FindObjectOfType<SteamVR_Camera>().GetComponent<Transform>();
         curHeadPosInLocal = headsetTransform.localPosition; curHeadPosInLocal.y = 0;
 
@@ -813,17 +821,29 @@ public class NavigationControl : MonoBehaviour {
 
                 RigPos.transform.position = new Vector4(NewPosVector.x - hX, hY, NewPosVector.y - hZ);
 
-                //Debug.Log(new Vector4(NewPosVector.x - hX, hY, NewPosVector.y - hZ));
+                lastHeadPosInLocal = curHeadPosInLocal;
+                curHeadPosInLocal = headsetTransform.localPosition;
+                curHeadPosInLocal.y = 0;
+
+                lastHeadPosInWorld = curHeadPosInWorld;
+                curHeadPosInWorld = headsetTransform.position;
+                curHeadPosInWorld.y = 0;
+
+                //bookmark
+
+                Vector3 displacement = curHeadPosInLocal - lastHeadPosInLocal;
+                Vector3 displacementWorld = curHeadPosInWorld - lastHeadPosInWorld;
+                Vector3 handPosition = getCurHandPosition();
+                AreaOfInterest candidateAOI = selectCurrentAOI(headsetTransform.position);
+                //float k = candidateAOI.getKValue(headsetTransform.position);
+                //k = GetKMod2(lastHeadPosInLocal, curHeadPosInLocal, lastHeadPosInWorld, curHeadPosInWorld);
+                float k = -1;
+                float curTime = UnityEngine.Time.realtimeSinceStartup;
+                TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, displacementWorld, curTime, k, handPosition);
 
             }
 
-
-
-
         }
-
-
-
 
         if (!_experimentReady)
         {
@@ -838,34 +858,36 @@ public class NavigationControl : MonoBehaviour {
             registeredVRTKListeners = (ce!=null);
         }
         //A. Update current and last position (constrained to floor). Compute displacement
-        lastHeadPosInLocal = curHeadPosInLocal;
-        curHeadPosInLocal = headsetTransform.localPosition; 
-        curHeadPosInLocal.y = 0;
 
-        lastHeadPosInWorld = curHeadPosInWorld;
-        curHeadPosInWorld = headsetTransform.position;
-        curHeadPosInWorld.y = 0;
-
-        //bookmark
-
-        Vector3 displacement = curHeadPosInLocal - lastHeadPosInLocal;
-        Vector3 handPosition = getCurHandPosition();
-        AreaOfInterest candidateAOI = selectCurrentAOI(headsetTransform.position);
-        float k = candidateAOI.getKValue(headsetTransform.position);
-        k = GetKMod2(lastHeadPosInLocal, curHeadPosInLocal, lastHeadPosInWorld, curHeadPosInWorld);
-        float curTime = UnityEngine.Time.realtimeSinceStartup;
         if (ScalingValuesPerTechnique.springScalingActivate == false)
         {
+            lastHeadPosInLocal = curHeadPosInLocal;
+            curHeadPosInLocal = headsetTransform.localPosition;
+            curHeadPosInLocal.y = 0;
+
+            lastHeadPosInWorld = curHeadPosInWorld;
+            curHeadPosInWorld = headsetTransform.position;
+            curHeadPosInWorld.y = 0;
+
+            //bookmark
+
+            Vector3 displacement = curHeadPosInLocal - lastHeadPosInLocal;
+            Vector3 handPosition = getCurHandPosition();
+            AreaOfInterest candidateAOI = selectCurrentAOI(headsetTransform.position);
+            float k = candidateAOI.getKValue(headsetTransform.position);
+            k = GetKMod2(lastHeadPosInLocal, curHeadPosInLocal, lastHeadPosInWorld, curHeadPosInWorld);
+            float curTime = UnityEngine.Time.realtimeSinceStartup;
             updateUserPositionDrift(k, displacement);
+            //Vector3 driftVector = ComputeDrift(curHeadPosInWorld, curHeadPosInLocal);
+            //float driftMagnitude = driftVector.magnitude;
+            //Vector3 virtualCenter = playAreaTransform.position;
+            //virtualCenter.y = 0;
+            //float PGCMag = virtualCenter.magnitude;
+            //Vector3 headToVR = headsetTransform.position; //headToVR.y = 0;
+            //Vector3 headToTracking = headsetTransform.localPosition; //headToTracking.y = 0;
+            TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
         }
-        Vector3 driftVector = ComputeDrift(curHeadPosInWorld, curHeadPosInLocal);
-        float driftMagnitude = driftVector.magnitude;
-        Vector3 virtualCenter = playAreaTransform.position;
-        virtualCenter.y = 0;
-        float PGCMag = virtualCenter.magnitude;
-        Vector3 headToVR = headsetTransform.position; //headToVR.y = 0;
-        Vector3 headToTracking = headsetTransform.localPosition; //headToTracking.y = 0;
-        TaskManager.instance().onHeadUpdate(headsetTransform.localPosition, displacement, headsetTransform.position, k * displacement, curTime, k, handPosition);
+
         //B. Select candidate AOI, based on current position IN WORLD
 
         //C. Update head position based on the selected AOI. 
