@@ -138,6 +138,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager
             EnvironmentManager.instance().stopEffect(SoundEffects.TICK_TACK_FEEDBACK);
             EnvironmentManager.instance().hidePathfinderLine();
             //WRITE FILE FOR THIS TASK: This is the "trace file" with the intermendiate head positions, etc...
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string fileName = Application.dataPath + "/../ExperimentResults/Travel_User_" +
                                taskData.travellingTrialData.UserID + "_" +
                                taskData.travellingTrialData.technique + "_" +

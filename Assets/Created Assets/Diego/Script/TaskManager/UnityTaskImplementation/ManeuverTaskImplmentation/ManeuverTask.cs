@@ -149,6 +149,10 @@ namespace Assets.Created_Assets.Diego.Script.TaskManager.UnityTaskImplementation
             //EnvironmentManager.instance().centralText("END MANEUVER"); ;
             EnvironmentManager.instance().showParafrustum(false);
             //WRITE FILE FOR THIS TRIAL:
+            if (taskData.travellingTrialData.M_factor != M_FACTOR.M_NONE && taskData.travellingTrialData.technique == NavigationTechnique.HOMOGENEOUS)
+            {
+                taskData.travellingTrialData.technique = NavigationTechnique.SPRINGGRID;
+            }
             string fileName = UnityEngine.Application.dataPath + "/../ExperimentResults/Maneuver_User_" +
                              taskData.maneuvringTrialData.UserID + "_" +
                                taskData.maneuvringTrialData.technique + "_" +
